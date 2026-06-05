@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model ProcurementOrder {
+  id            String   @id @default(cuid())
+  type          String   // "nigeria" | "international"
+  customerName  String
+  customerEmail String
+  customerPhone String
+  items         Json     // Array of { name, specification, quantity, deliveryMode, deliveryAddress? }
+  status        String   @default("pending") // pending | confirmed | completed | cancelled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DeliveryRequest {
+  id              String   @id @default(cuid())
+  type            String   // "local" | "international"
+  senderName      String
+  senderEmail     String
+  senderPhone     String
+  itemDescription String
+  itemWeight      Float
+  weightUnit      String   // "kg" | "lbs"
+  destination     String
+  receiverName    String
+  receiverContact String
+  consentGiven    Boolean
+  status          String   @default("pending") // pending | confirmed | completed | cancelled
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RelocationRequest {
+  id              String   @id @default(cuid())
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  pickupLocation  String
+  destination     String
+  itemsList       String
+  itemDescription String
+  transportBy     String   // "self" | "fraogo"
+  status          String   @default("pending") // pending | confirmed | completed | cancelled
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Vendor {
+  id             String          @id @default(cuid())
+  businessName   String
+  description    String
+  location       String
+  phone          String
+  businessType   String
+  ninDocumentUrl String
+  email          String?
+  status         String          @default("pending_review") // pending_review | active | rejected
+  portfolioImages VendorImage[]
+  requests       VendorRequest[]
+  magicLinks     VendorMagicLink[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model VendorImage {
+  id        String   @id @default(cuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  url       String
+  fileName  String?
+  createdAt DateTime @default(now())
+}
+
+model VendorRequest {
+  id            String    @id @default(cuid())
+  vendorId      String
+  vendor        Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  customerName  String
+  customerEmail String
+  customerPhone String
+  eventDate     DateTime?
+  description   String
+  budget        String?
+  status        String    @default("pending") // pending | confirmed | completed
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model VendorMagicLink {
+  id        String   @id @default(cuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SupplyOrder {
+  id            String   @id @default(cuid())
+  customerName  String
+  customerEmail String
+  customerPhone String
+  destination   String
+  preferredDate DateTime
+  items         Json     // Array of { name, quantity, unit }
+  status        String   @default("pending") // pending | confirmed | completed | cancelled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  clientName    String
+  clientEmail   String?
+  invoiceDate   DateTime
+  taxRate       Float
+  lineItems     Json     // Array of { name, quantity, unitPrice, total }
+  subtotal      Float
+  tax           Float
+  grandTotal    Float
+  createdAt     DateTime @default(now())
+}
